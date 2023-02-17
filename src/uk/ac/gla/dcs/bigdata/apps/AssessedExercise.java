@@ -116,18 +116,20 @@ public class AssessedExercise {
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
 		news.repartition(4);
-		LongAccumulator docCount = spark.sparkContext().longAccumulator();
+		LongAccumulator docLengthCount = spark.sparkContext().longAccumulator();
 		LongAccumulator wordCount = spark.sparkContext().longAccumulator();
 
 		// total docs in the dataset
 		long totalDocuments = news.count();
 		// Preprocessing the new articles using tokenizer. The resultant is a ProcessedNewsArticlesMap dataset
 		Encoder<ProcessedNewsArticle> processedNewsArticleEncoder = Encoders.bean(ProcessedNewsArticle.class);
-		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap();
+		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap(docLengthCount);
 		Dataset<ProcessedNewsArticle> processedData = news.map(preProcessing, processedNewsArticleEncoder);
 
 		System.out.println(processedData.count());
 		System.out.println(totalDocuments);
+		System.out.println(docLengthCount.value());
+		System.out.println(docLengthCount.value()/totalDocuments);
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 

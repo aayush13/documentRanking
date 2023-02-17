@@ -24,6 +24,7 @@ public class ProcessedNewsArticle implements Serializable {
 	String titleText;
 	List<String> tokenisedTitle;
 	List<String> tokenisedContent;
+	int documentLength;
 	double score;
 
 	public ProcessedNewsArticle() {
@@ -76,5 +77,12 @@ public class ProcessedNewsArticle implements Serializable {
 
 	public void setScore(double score) {
 		this.score = score;
+	}
+	public int getDocumentLength() {
+		return documentLength;
+	}
+
+	public void setDocumentLength(int documentLength) {
+		this.documentLength = documentLength;
 	}
 }
