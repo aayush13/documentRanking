@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.util.LongAccumulator;
 
 import uk.ac.gla.dcs.bigdata.providedstructures.ContentItem;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
@@ -15,6 +16,12 @@ public class ProcessedNewsArticlesMap implements MapFunction<NewsArticle, Proces
 	 *
 	 */
 	private static final long serialVersionUID = 3868880217693153641L;
+	LongAccumulator docLengthCount;
+
+	public ProcessedNewsArticlesMap() {}
+	public ProcessedNewsArticlesMap(LongAccumulator docLengthCount){
+		this.docLengthCount = docLengthCount;
+	}
 
 	@Override
 	public ProcessedNewsArticle call(NewsArticle value) throws Exception {
@@ -30,10 +37,15 @@ public class ProcessedNewsArticlesMap implements MapFunction<NewsArticle, Proces
 					List<String> contentToken = processor.process(item.getContent());
 					tokenizeContent.addAll(contentToken);
 				}
-				subTypeCounter++;
+				++subTypeCounter;
+			} else {
+				continue;
 			}
 		}
 		ProcessedNewsArticle processedArticle = new ProcessedNewsArticle(value.getId(), value, newTitle, tokens, tokenizeContent, 0.0);
+		int docLen = tokenizeContent.size()+ tokens.size();
+		docLengthCount.add(docLen);
+		processedArticle.setDocumentLength(docLen);
 		return processedArticle;
 	}
 }
