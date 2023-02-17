@@ -7,6 +7,17 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 
 public class ProcessedNewsArticle implements Serializable {
 
+	public ProcessedNewsArticle(String docid, NewsArticle article, String titleText, List<String> tokenisedTitle,
+			List<String> tokenisedContent, double score) {
+		super();
+		this.docid = docid;
+		this.article = article;
+		this.titleText = titleText;
+		this.tokenisedTitle = tokenisedTitle;
+		this.tokenisedContent = tokenisedContent;
+		this.score = score;
+	}
+
 	private static final long serialVersionUID = 1029529112663235715L;
 	String docid;
 	NewsArticle article;
