@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -15,6 +16,8 @@ import uk.ac.gla.dcs.bigdata.providedfunctions.QueryFormaterMap;
 import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
+import uk.ac.gla.dcs.bigdata.studentfunctions.ProcessedNewsArticlesMap;
+import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
 /**
  * This is the main class where your Spark topology should be specified.
@@ -116,6 +119,15 @@ public class AssessedExercise {
 		LongAccumulator docCount = spark.sparkContext().longAccumulator();
 		LongAccumulator wordCount = spark.sparkContext().longAccumulator();
 
+		// total docs in the dataset
+		long totalDocuments = news.count();
+		// Preprocessing the new articles using tokenizer. The resultant is a ProcessedNewsArticlesMap dataset
+		Encoder<ProcessedNewsArticle> processedNewsArticleEncoder = Encoders.bean(ProcessedNewsArticle.class);
+		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap();
+		Dataset<ProcessedNewsArticle> processedData = news.map(preProcessing, processedNewsArticleEncoder);
+
+		System.out.println(processedData.count());
+		System.out.println(totalDocuments);
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
