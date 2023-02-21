@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
@@ -17,6 +19,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.ProcessedNewsArticlesMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.QueryFilterFlatMap;
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
 /**
@@ -126,10 +129,29 @@ public class AssessedExercise {
 		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap(docLengthCount);
 		Dataset<ProcessedNewsArticle> processedData = news.map(preProcessing, processedNewsArticleEncoder);
 
+		//broadcast queries
+		Broadcast<List<Query>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
+
+		// TODO - Add term frequency counter for entire corpus
+
+		// TODO - calculate DHP score
+
+		// TODO - Sort DHP SCore
+
+		// term counts using flat map
+		QueryFilterFlatMap flatMapFilter = new QueryFilterFlatMap(queryList);
+		Dataset<ProcessedNewsArticle> filteredNewsArticles = processedData.flatMap(flatMapFilter, processedNewsArticleEncoder);
+
+		// to be removed later
+		List<ProcessedNewsArticle> x = filteredNewsArticles.collectAsList();
 		System.out.println(processedData.count());
 		System.out.println(totalDocuments);
 		System.out.println(docLengthCount.value());
 		System.out.println(docLengthCount.value()/totalDocuments);
+		System.out.println(x.size());
+		for(ProcessedNewsArticle item : x) {
+			System.out.println(item.getMatchingTerm());
+		}
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
