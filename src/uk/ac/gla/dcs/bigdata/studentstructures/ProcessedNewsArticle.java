@@ -2,6 +2,7 @@ package uk.ac.gla.dcs.bigdata.studentstructures;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 
@@ -24,8 +25,18 @@ public class ProcessedNewsArticle implements Serializable {
 	String titleText;
 	List<String> tokenisedTitle;
 	List<String> tokenisedContent;
+	Map<String, Integer> termCounts;
 	int documentLength;
 	double score;
+	String matchingTerm;
+
+	public String getMatchingTerm() {
+		return matchingTerm;
+	}
+
+	public void setMatchingTerm(String matchingTerm) {
+		this.matchingTerm = matchingTerm;
+	}
 
 	public ProcessedNewsArticle() {
 		this.score = 0.0;
@@ -84,5 +95,12 @@ public class ProcessedNewsArticle implements Serializable {
 
 	public void setDocumentLength(int documentLength) {
 		this.documentLength = documentLength;
+	}
+	public Map<String, Integer> getTermCounts() {
+		return termCounts;
+	}
+
+	public void setTermCounts(Map<String, Integer> termCounts) {
+		this.termCounts = termCounts;
 	}
 }
