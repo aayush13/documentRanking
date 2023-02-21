@@ -149,9 +149,9 @@ public class AssessedExercise {
 		System.out.println(docLengthCount.value());
 		System.out.println(docLengthCount.value()/totalDocuments);
 		System.out.println(x.size());
-		//		for(ProcessedNewsArticle item : x) {
-		//			System.out.println(item.getMatchingTerm());
-		//		}
+		for(ProcessedNewsArticle item : x) {
+			System.out.println(item.getMatchingTerm());
+		}
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
