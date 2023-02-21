@@ -20,6 +20,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.ProcessedNewsArticlesMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.QueryFilterFlatMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.TermListMap;
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
 /**
@@ -129,9 +130,15 @@ public class AssessedExercise {
 		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap(docLengthCount);
 		Dataset<ProcessedNewsArticle> processedData = news.map(preProcessing, processedNewsArticleEncoder);
 
+		TermListMap queryToListConvert = new TermListMap();
+		Dataset<String> queryL = queries.flatMap(queryToListConvert, Encoders.STRING());
+		List<String> allQueryList = queryL.collectAsList();
 		//broadcast queries
-		Broadcast<List<Query>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
+		Broadcast<List<Query>> allQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
 
+
+		// list of all tokens for all the queries
+		Broadcast<List<String>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(allQueryList);
 		// TODO - Add term frequency counter for entire corpus
 
 		// TODO - calculate DHP score
@@ -139,7 +146,7 @@ public class AssessedExercise {
 		// TODO - Sort DHP SCore
 
 		// term counts using flat map
-		QueryFilterFlatMap flatMapFilter = new QueryFilterFlatMap(queryList);
+		QueryFilterFlatMap flatMapFilter = new QueryFilterFlatMap(allQueries);
 		Dataset<ProcessedNewsArticle> filteredNewsArticles = processedData.flatMap(flatMapFilter, processedNewsArticleEncoder);
 
 		// to be removed later
@@ -149,9 +156,9 @@ public class AssessedExercise {
 		System.out.println(docLengthCount.value());
 		System.out.println(docLengthCount.value()/totalDocuments);
 		System.out.println(x.size());
-		for(ProcessedNewsArticle item : x) {
-			System.out.println(item.getMatchingTerm());
-		}
+		//		for(ProcessedNewsArticle item : x) {
+		//			System.out.println(item.getMatchingTerm());
+		//		}
 		return null; // replace this with the the list of DocumentRanking output by your topology
 	}
 
