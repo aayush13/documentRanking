@@ -26,7 +26,7 @@ public class QueryFilterFlatMap implements FlatMapFunction<ProcessedNewsArticle,
 	@Override
 	public Iterator<ProcessedNewsArticle> call(ProcessedNewsArticle value) throws Exception {
 		Map<String, Integer> termCounts = new HashMap<>();
-		//List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>();
+		List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>();
 		List<String> mergedContent = new ArrayList<String>();
 		mergedContent.addAll(value.getTokenisedContent());
 		mergedContent.addAll(value.getTokenisedTitle());
@@ -38,18 +38,20 @@ public class QueryFilterFlatMap implements FlatMapFunction<ProcessedNewsArticle,
 			if ( mergedContent.containsAll(queryTokens)) {
 				String orginalQuery = item.getOriginalQuery();
 				value.setMatchingTerm(orginalQuery);
+				result.add(value);
 				count++;	// count occurrence function needs to be written
 			}
 			value.setTermCounts(termCounts);
 		}
-		if(value.getMatchingTerm() != null) {
-			List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>(1);
-			result.add(value);
-			return result.iterator();
-		} else {
-			List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>(0);
-			result.add(value);
-			return result.iterator();
-		}
+		//		if(value.getMatchingTerm() != null) {
+		//			List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>(1);
+		//			result.add(value);
+		//			return result.iterator();
+		//		} else {
+		//			List<ProcessedNewsArticle> result = new ArrayList<ProcessedNewsArticle>(0);
+		//			result.add(value);
+		//			return result.iterator();
+		//		}
+		return result.iterator();
 	}
 }
