@@ -13,7 +13,6 @@ public class ProcessedNewsArticle implements Serializable {
 		super();
 		this.docid = docid;
 		this.article = article;
-		this.titleText = titleText;
 		this.tokenisedTitle = tokenisedTitle;
 		this.tokenisedContent = tokenisedContent;
 		this.score = score;
@@ -22,7 +21,6 @@ public class ProcessedNewsArticle implements Serializable {
 	private static final long serialVersionUID = 1029529112663235715L;
 	String docid;
 	NewsArticle article;
-	String titleText;
 	List<String> tokenisedTitle;
 	List<String> tokenisedContent;
 	Map<String, Integer> termCounts;
@@ -56,14 +54,6 @@ public class ProcessedNewsArticle implements Serializable {
 
 	public void setArticle(NewsArticle article) {
 		this.article = article;
-	}
-
-	public String getTitleText() {
-		return titleText;
-	}
-
-	public void setTitleText(String titleText) {
-		this.titleText = titleText;
 	}
 
 	public List<String> getTokenisedTitle() {
