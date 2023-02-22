@@ -32,20 +32,23 @@ public class ProcessedNewsArticlesMap implements MapFunction<NewsArticle, Proces
 		List<String> tokenizeContent = new ArrayList<String>();
 		int subTypeCounter = 0;
 		for(ContentItem item : contentIterator) {
-			String subtype = item.getSubtype();
-			if( subtype !=null && subtype.equals("paragraph")) {
-				if(subTypeCounter < 5) {
-					List<String> contentToken = processor.process(item.getContent());
-					tokenizeContent.addAll(contentToken);
-					++subTypeCounter;
+			try {
+				String subtype = item.getSubtype();
+				if( subtype !=null && subtype.equals("paragraph")) {
+					if(subTypeCounter < 5) {
+						List<String> contentToken = processor.process(item.getContent());
+						tokenizeContent.addAll(contentToken);
+						++subTypeCounter;
+					}
+				} else {
+					continue;
 				}
-			} else {
+			} catch(Exception e) {
 				continue;
 			}
 		}
 		ProcessedNewsArticle processedArticle = new ProcessedNewsArticle(value.getId(), value, newTitle, tokens, tokenizeContent, 0.0);
 		int docLen = tokenizeContent.size()+ tokens.size();
-		//System.out.println(tokens.size()+ " "+ tokenizeContent.size()+ " "+ docLen);
 		docLengthCount.add(docLen);
 		processedArticle.setDocumentLength(docLen);
 		return processedArticle;
