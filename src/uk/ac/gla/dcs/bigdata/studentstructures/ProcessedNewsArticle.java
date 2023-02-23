@@ -28,6 +28,7 @@ public class ProcessedNewsArticle implements Serializable {
 	double score;
 	String matchingTerm;
 
+
 	public String getMatchingTerm() {
 		return matchingTerm;
 	}
