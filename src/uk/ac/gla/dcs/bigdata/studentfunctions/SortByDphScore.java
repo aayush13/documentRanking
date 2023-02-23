@@ -18,11 +18,13 @@ public class SortByDphScore implements FlatMapGroupsFunction<String, Tuple3<Stri
 
 	@Override
 	public Iterator<Tuple3<String, NewsArticle, Double>> call(String key, Iterator<Tuple3<String, NewsArticle, Double>> tuples) {
+		List<Tuple3<String, NewsArticle, Double>> rankedResult = new ArrayList<>();
 		List<Tuple3<String, NewsArticle, Double>> sortedTuples = new ArrayList<>();
 		while (tuples.hasNext()) {
 			sortedTuples.add(tuples.next());
 		}
 		Collections.sort(sortedTuples, Collections.reverseOrder((t1, t2) -> Double.compare(t1._3(), t2._3())));
+
 		return sortedTuples.iterator();
 	}
 }

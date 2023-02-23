@@ -187,7 +187,6 @@ public class AssessedExercise {
 		GroupDocsByQuery groupFunc = new GroupDocsByQuery();
 		KeyValueGroupedDataset<String, Tuple3<String,NewsArticle, Double>> grpDocs= matchedDocs.groupByKey(groupFunc,Encoders.STRING());
 
-
 		//reducer for sorting the above results
 		Encoder<Tuple3<String, NewsArticle, Double>> grpSortEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class), Encoders.DOUBLE());
 		SortByDphScore sortFunc = new SortByDphScore();
