@@ -15,7 +15,9 @@ public class GroupDocsByQuery implements MapFunction<Tuple3<String,NewsArticle, 
 
 	@Override
 	public String call(Tuple3<String, NewsArticle, Double> value) throws Exception {
+		// TODO Auto-generated method stub
 		return value._1();
 	}
+
 
 }
