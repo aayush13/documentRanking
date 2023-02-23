@@ -25,6 +25,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.studentfunctions.CalculateDPHScore;
 import uk.ac.gla.dcs.bigdata.studentfunctions.GroupDocsByQuery;
 import uk.ac.gla.dcs.bigdata.studentfunctions.ProcessedNewsArticlesMap;
+import uk.ac.gla.dcs.bigdata.studentfunctions.SortByDphScore;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TermListMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TokenCounterFlatMap;
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
@@ -80,9 +81,9 @@ public class AssessedExercise {
 		String newsFile = System.getenv("bigdata.news");
 		if (newsFile==null)
 		{
-			newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+			newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
 		}
-		// TREC_Washington_Post_collection.v2.jl.fix
+		// TREC_Washington_Post_collection.v2.jl.fix.json
 		//TREC_Washington_Post_collection.v3.example.json
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
@@ -147,11 +148,10 @@ public class AssessedExercise {
 		// list of all tokens for all the queries
 		Broadcast<List<String>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(allQueryList);
 
-		// TODO - calculate DHP score
-
 		// TODO - Sort DHP SCore
 
-		// term counts using flat map
+		// term counts using flat map and return document matching a query only if it contains any tokens
+
 		TokenCounterFlatMap flatMapFilter = new TokenCounterFlatMap(queryList);
 		Dataset<ProcessedNewsArticle> newsArticlesWithDictionary = processedData.flatMap(flatMapFilter, processedNewsArticleEncoder);
 		//List<ProcessedNewsArticle> listOfNewsArticles = newsArticlesWithDictionary.collectAsList();
@@ -178,19 +178,26 @@ public class AssessedExercise {
 		Double avgDocLen = ((double)docL/(double)totalDocuments);
 		Broadcast<Double> avgDocumentLengthinCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(avgDocLen);
 
+		// calculate DPH score
 		Encoder<Tuple3<String,NewsArticle, Double>> matchedDocEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class),Encoders.DOUBLE());
 		CalculateDPHScore getDph = new CalculateDPHScore(allQueries, docCount, corpusTf, avgDocumentLengthinCorpus);
 		Dataset<Tuple3<String,NewsArticle, Double>> matchedDocs = newsArticlesWithDictionary.flatMap(getDph, matchedDocEncoder);
 
 		//group queries based on string
 		GroupDocsByQuery groupFunc = new GroupDocsByQuery();
-		KeyValueGroupedDataset<String, Tuple3<String,NewsArticle, Double>> grpDocs= matchedDocs.groupByKey(groupFunc, Encoders.STRING());
+		KeyValueGroupedDataset<String, Tuple3<String,NewsArticle, Double>> grpDocs= matchedDocs.groupByKey(groupFunc,Encoders.STRING());
 
 
-		List<String> my = grpDocs.keys().collectAsList();
-		for(String i : my) {
-			System.out.println(i);
-		}
+		//reducer for sorting the above results
+		Encoder<Tuple3<String, NewsArticle, Double>> grpSortEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class), Encoders.DOUBLE());
+		SortByDphScore sortFunc = new SortByDphScore();
+		Dataset<Tuple3<String, NewsArticle, Double>> sorted = grpDocs.flatMapGroups(sortFunc, grpSortEncoder);
+
+
+		//		List<String> my = grpDocs.keys().collectAsList();
+		//		for(String i : my) {
+		//			System.out.println(i);
+		//		}
 		List<Tuple3<String,NewsArticle, Double>> x= matchedDocs.collectAsList();
 		System.out.println(x.size());
 		System.out.println(totalDocuments);
