@@ -18,6 +18,10 @@ public class ProcessedNewsArticle implements Serializable {
 		this.score = score;
 	}
 
+	public ProcessedNewsArticle(Map<String, Integer> termCount) {
+		this.termCounts = termCount;
+	}
+
 	private static final long serialVersionUID = 1029529112663235715L;
 	String docid;
 	NewsArticle article;
