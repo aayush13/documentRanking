@@ -13,6 +13,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.DocumentRanking;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
+import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 
 public class SortByDphScore implements MapGroupsFunction<String, Tuple3<String, NewsArticle, Double>, DocumentRanking> {
 	/**
@@ -33,7 +34,28 @@ public class SortByDphScore implements MapGroupsFunction<String, Tuple3<String, 
 			sortedTuples.add(tuples.next());
 		}
 		Collections.sort(sortedTuples, Collections.reverseOrder((t1, t2) -> Double.compare(t1._3(), t2._3())));
-
+		for(Tuple3<String, NewsArticle, Double> item : sortedTuples) {
+			if(rankedResult.size() == 10) {
+				break;
+			}
+			if(rankedResult.size()<=0) {
+				rankedResult.add(new RankedResult(item._2().getId(), item._2(), item._3()));
+			} else {
+				boolean flag = false;
+				for(RankedResult ranked : rankedResult) {
+					flag= false;
+					double distance = TextDistanceCalculator.similarity(ranked.getArticle().getTitle(), item._2().getTitle());
+					if(distance >= 0.5) {
+						flag= true;
+					} else {
+						break;
+					}
+				}
+				if(flag) {
+					rankedResult.add(new RankedResult(item._2().getId(), item._2(), item._3()));
+				}
+			}
+		}
 		return (new DocumentRanking(getMatchingQuery(this.allQueries,key), rankedResult));
 	}
 

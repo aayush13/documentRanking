@@ -81,7 +81,7 @@ public class AssessedExercise {
 		String newsFile = System.getenv("bigdata.news");
 		if (newsFile==null)
 		{
-			newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
+			newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 		}
 		// TREC_Washington_Post_collection.v2.jl.fix.json
 		//TREC_Washington_Post_collection.v3.example.json
