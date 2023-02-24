@@ -81,7 +81,7 @@ public class AssessedExercise {
 		String newsFile = System.getenv("bigdata.news");
 		if (newsFile==null)
 		{
-			newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
+			newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
 		}
 		// TREC_Washington_Post_collection.v2.jl.fix.json
 		//TREC_Washington_Post_collection.v3.example.json
@@ -130,9 +130,8 @@ public class AssessedExercise {
 		//news.repartition(4);
 		LongAccumulator docLengthCount = spark.sparkContext().longAccumulator();
 		docLengthCount.reset();
-		LongAccumulator wordCount = spark.sparkContext().longAccumulator();
 
-		// total docs in the dataset
+		// total documents in the dataset
 		long totalDocuments = news.count();
 		// Preprocessing the new articles using tokenizer. The resultant is a ProcessedNewsArticlesMap dataset
 		Encoder<ProcessedNewsArticle> processedNewsArticleEncoder = Encoders.bean(ProcessedNewsArticle.class);
@@ -148,15 +147,12 @@ public class AssessedExercise {
 		// list of all tokens for all the queries
 		Broadcast<List<String>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(allQueryList);
 
-		// TODO - Sort DHP SCore
-
 		// term counts using flat map and return document matching a query only if it contains any tokens
-
 		TokenCounterFlatMap flatMapFilter = new TokenCounterFlatMap(queryList);
 		Dataset<ProcessedNewsArticle> newsArticlesWithDictionary = processedData.flatMap(flatMapFilter, processedNewsArticleEncoder);
 		//List<ProcessedNewsArticle> listOfNewsArticles = newsArticlesWithDictionary.collectAsList();
 
-		// prepare vocab
+		// prepare vocabulary
 		long docL = 0;
 		List<ProcessedNewsArticle> newsArticlesWithDictionaryList = newsArticlesWithDictionary.collectAsList();
 		Map<String,Integer> corpusVocab = new HashMap<String, Integer>();
@@ -169,7 +165,7 @@ public class AssessedExercise {
 			}
 		}
 
-		// total docs in corpus
+		// total documents in corpus
 		Broadcast<Long> docCount = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalDocuments);
 		// broadcast corpus term frequency
 		Broadcast<Map<String,Integer>> corpusTf = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpusVocab);
@@ -188,25 +184,30 @@ public class AssessedExercise {
 		KeyValueGroupedDataset<String, Tuple3<String,NewsArticle, Double>> grpDocs= matchedDocs.groupByKey(groupFunc,Encoders.STRING());
 
 		//reducer for sorting the above results
-		Encoder<Tuple3<String, NewsArticle, Double>> grpSortEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class), Encoders.DOUBLE());
-		SortByDphScore sortFunc = new SortByDphScore();
-		Dataset<Tuple3<String, NewsArticle, Double>> sorted = grpDocs.flatMapGroups(sortFunc, grpSortEncoder);
+		//Encoder<Tuple3<String, NewsArticle, Double>> grpSortEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class), Encoders.DOUBLE());
+		Encoder<DocumentRanking> docRankEncoder = Encoders.bean(DocumentRanking.class);
+		SortByDphScore sortFunc = new SortByDphScore(allQueries);
+		Dataset<DocumentRanking> rankedDocumentResult = grpDocs.mapGroups(sortFunc, docRankEncoder);
 
 
 		//		List<String> my = grpDocs.keys().collectAsList();
 		//		for(String i : my) {
 		//			System.out.println(i);
 		//		}
-		List<Tuple3<String,NewsArticle, Double>> x= matchedDocs.collectAsList();
-		System.out.println(x.size());
-		System.out.println(totalDocuments);
-		System.out.println(docL);
-		System.out.println(docLengthCount.value());
-		System.out.println(avgDocLen);
-		System.out.println(newsArticlesWithDictionaryList.size());
+		//		Dataset<Tuple2<String, Object>> test = grpDocs.count();
+		//		for(Tuple2<String, Object> y : test.collectAsList()) {
+		//			System.out.println(y._1()+ " "+ y._2());
+		//		}
+		//		List<Tuple3<String,NewsArticle, Double>> x= matchedDocs.collectAsList();
+		//		System.out.println(x.size());
+		//		System.out.println(totalDocuments);
+		//		System.out.println(docL);
+		//		System.out.println(docLengthCount.value());
+		//		System.out.println(avgDocLen);
+		//		System.out.println(newsArticlesWithDictionaryList.size());
 
 		docLengthCount.reset();
-		return null; // replace this with the the list of DocumentRanking output by your topology
+		return rankedDocumentResult.collectAsList(); // replace this with the the list of DocumentRanking output by your topology
 	}
 
 

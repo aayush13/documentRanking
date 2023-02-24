@@ -42,9 +42,10 @@ public class CalculateDPHScore implements FlatMapFunction<ProcessedNewsArticle, 
 		for(Query q : allQueries) {
 			List<String> queryTokens = q.getQueryTerms();
 			String originalQ = q.getOriginalQuery();
+			score = 0.0;
 			for (String token : queryTokens) {
 				if(terms.containsKey(token)) {
-					// calculate dph score
+					// calculate DPH score
 					score += DPHScorer.getDPHScore(terms.get(token).shortValue(),this.corpusTf.get(token), value.getDocumentLength(), this.avgLen, this.docCount);
 
 				} else {
@@ -56,7 +57,7 @@ public class CalculateDPHScore implements FlatMapFunction<ProcessedNewsArticle, 
 			// create tuple3
 			Tuple3<String, NewsArticle, Double> temp = new Tuple3<String, NewsArticle, Double>( originalQ , value.getArticle(), avgScore);
 			// add it to a tuple3 list
-			if(!Double.isNaN(avgScore) && avgScore >0.0) {
+			if(!Double.isNaN(avgScore) && avgScore >0.0 && temp._2().getTitle() != null) {
 				result.add(temp);
 			}
 		}
