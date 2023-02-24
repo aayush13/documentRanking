@@ -1,7 +1,6 @@
 package uk.ac.gla.dcs.bigdata.apps;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +25,7 @@ import uk.ac.gla.dcs.bigdata.studentfunctions.CalculateDPHScore;
 import uk.ac.gla.dcs.bigdata.studentfunctions.GroupDocsByQuery;
 import uk.ac.gla.dcs.bigdata.studentfunctions.ProcessedNewsArticlesMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.SortByDphScore;
+import uk.ac.gla.dcs.bigdata.studentfunctions.SumTfForCorpus;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TermListMap;
 import uk.ac.gla.dcs.bigdata.studentfunctions.TokenCounterFlatMap;
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
@@ -81,10 +81,10 @@ public class AssessedExercise {
 		String newsFile = System.getenv("bigdata.news");
 		if (newsFile==null)
 		{
-			newsFile = "data/TREC_Washington_Post_collection.v3.example.json"; // default is a sample of 5000 news articles
+			newsFile = "data/TREC_Washington_Post_collection.v2.jl.fix.json"; // default is a sample of 5000 news articles
 		}
 		// TREC_Washington_Post_collection.v2.jl.fix.json
-		//TREC_Washington_Post_collection.v3.example.json
+		// TREC_Washington_Post_collection.v3.example.json
 		// Call the student's code
 		List<DocumentRanking> results = rankDocuments(spark, queryFile, newsFile);
 
@@ -150,20 +150,23 @@ public class AssessedExercise {
 		// term counts using flat map and return document matching a query only if it contains any tokens
 		TokenCounterFlatMap flatMapFilter = new TokenCounterFlatMap(queryList);
 		Dataset<ProcessedNewsArticle> newsArticlesWithDictionary = processedData.flatMap(flatMapFilter, processedNewsArticleEncoder);
-		//List<ProcessedNewsArticle> listOfNewsArticles = newsArticlesWithDictionary.collectAsList();
 
+		//getVocab using spark
+		SumTfForCorpus tfSumReducer = new SumTfForCorpus();
+		ProcessedNewsArticle corpusVocabulary = newsArticlesWithDictionary.reduce(tfSumReducer);
+		Map<String, Integer> corpusVocab =  corpusVocabulary.getTermCounts();
 		// prepare vocabulary
-		long docL = 0;
-		List<ProcessedNewsArticle> newsArticlesWithDictionaryList = newsArticlesWithDictionary.collectAsList();
-		Map<String,Integer> corpusVocab = new HashMap<String, Integer>();
-		for(ProcessedNewsArticle item : newsArticlesWithDictionaryList) {
-			docL += item.getDocumentLength();
-			for (Map.Entry<String, Integer> dict : item.getTermCounts().entrySet()) {
-				String key = dict.getKey();
-				Integer value = dict.getValue();
-				corpusVocab.merge(key, value, Integer::sum);
-			}
-		}
+		//		long docL = 0;
+		//		List<ProcessedNewsArticle> newsArticlesWithDictionaryList = newsArticlesWithDictionary.collectAsList();
+		//		Map<String,Integer> corpusVocab = new HashMap<String, Integer>();
+		//		for(ProcessedNewsArticle item : newsArticlesWithDictionaryList) {
+		//			docL += item.getDocumentLength();
+		//			for (Map.Entry<String, Integer> dict : item.getTermCounts().entrySet()) {
+		//				String key = dict.getKey();
+		//				Integer value = dict.getValue();
+		//				corpusVocab.merge(key, value, Integer::sum);
+		//			}
+		//		}
 
 		// total documents in corpus
 		Broadcast<Long> docCount = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalDocuments);
@@ -171,7 +174,7 @@ public class AssessedExercise {
 		Broadcast<Map<String,Integer>> corpusTf = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpusVocab);
 
 		// broadcast avg length of doc
-		Double avgDocLen = ((double)docL/(double)totalDocuments);
+		Double avgDocLen = (double) (docLengthCount.value()/totalDocuments);
 		Broadcast<Double> avgDocumentLengthinCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(avgDocLen);
 
 		// calculate DPH score
@@ -188,24 +191,7 @@ public class AssessedExercise {
 		Encoder<DocumentRanking> docRankEncoder = Encoders.bean(DocumentRanking.class);
 		SortByDphScore sortFunc = new SortByDphScore(allQueries);
 		Dataset<DocumentRanking> rankedDocumentResult = grpDocs.mapGroups(sortFunc, docRankEncoder);
-
-
-		//		List<String> my = grpDocs.keys().collectAsList();
-		//		for(String i : my) {
-		//			System.out.println(i);
-		//		}
-		//		Dataset<Tuple2<String, Object>> test = grpDocs.count();
-		//		for(Tuple2<String, Object> y : test.collectAsList()) {
-		//			System.out.println(y._1()+ " "+ y._2());
-		//		}
-		//		List<Tuple3<String,NewsArticle, Double>> x= matchedDocs.collectAsList();
-		//		System.out.println(x.size());
-		//		System.out.println(totalDocuments);
-		//		System.out.println(docL);
-		//		System.out.println(docLengthCount.value());
-		//		System.out.println(avgDocLen);
-		//		System.out.println(newsArticlesWithDictionaryList.size());
-
+		System.out.println(avgDocLen);
 		docLengthCount.reset();
 		return rankedDocumentResult.collectAsList(); // replace this with the the list of DocumentRanking output by your topology
 	}
