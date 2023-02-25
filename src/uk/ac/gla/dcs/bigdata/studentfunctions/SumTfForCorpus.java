@@ -21,7 +21,6 @@ public class SumTfForCorpus implements ReduceFunction<ProcessedNewsArticle>{
 		for (String key : v2.keySet()) {
 			result.put(key, result.getOrDefault(key, 0) + v2.get(key));
 		}
-
 		return new ProcessedNewsArticle(result);
 	}
 
