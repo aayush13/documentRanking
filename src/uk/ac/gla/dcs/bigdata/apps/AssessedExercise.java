@@ -127,24 +127,28 @@ public class AssessedExercise {
 		//----------------------------------------------------------------
 		// Your Spark Topology should be defined here
 		//----------------------------------------------------------------
-		//news.repartition(4);
+		//accumulator for sum of document length for all documents
 		LongAccumulator docLengthCount = spark.sparkContext().longAccumulator();
 		docLengthCount.reset();
 
 		// total documents in the dataset
 		long totalDocuments = news.count();
+
 		// Preprocessing the new articles using tokenizer. The resultant is a ProcessedNewsArticlesMap dataset
 		Encoder<ProcessedNewsArticle> processedNewsArticleEncoder = Encoders.bean(ProcessedNewsArticle.class);
 		ProcessedNewsArticlesMap preProcessing = new ProcessedNewsArticlesMap(docLengthCount);
 		Dataset<ProcessedNewsArticle> processedData = news.map(preProcessing, processedNewsArticleEncoder);
 
+
+		// get list which contains tokens from all queries.
 		TermListMap queryToListConvert = new TermListMap();
 		Dataset<String> queryL = queries.flatMap(queryToListConvert, Encoders.STRING());
 		List<String> allQueryList = queryL.collectAsList();
+
 		//broadcast queries
 		Broadcast<List<Query>> allQueries = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(queries.collectAsList());
 
-		// list of all tokens for all the queries
+		// broadcast list of all tokens for all the queries
 		Broadcast<List<String>> queryList = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(allQueryList);
 
 		// term counts using flat map and return document matching a query only if it contains any tokens
@@ -155,25 +159,13 @@ public class AssessedExercise {
 		SumTfForCorpus tfSumReducer = new SumTfForCorpus();
 		ProcessedNewsArticle corpusVocabulary = newsArticlesWithDictionary.reduce(tfSumReducer);
 		Map<String, Integer> corpusVocab =  corpusVocabulary.getTermCounts();
-		// prepare vocabulary
-		//		long docL = 0;
-		//		List<ProcessedNewsArticle> newsArticlesWithDictionaryList = newsArticlesWithDictionary.collectAsList();
-		//		Map<String,Integer> corpusVocab = new HashMap<String, Integer>();
-		//		for(ProcessedNewsArticle item : newsArticlesWithDictionaryList) {
-		//			docL += item.getDocumentLength();
-		//			for (Map.Entry<String, Integer> dict : item.getTermCounts().entrySet()) {
-		//				String key = dict.getKey();
-		//				Integer value = dict.getValue();
-		//				corpusVocab.merge(key, value, Integer::sum);
-		//			}
-		//		}
 
-		// total documents in corpus
+		// broadcast total documents in corpus
 		Broadcast<Long> docCount = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(totalDocuments);
 		// broadcast corpus term frequency
 		Broadcast<Map<String,Integer>> corpusTf = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(corpusVocab);
 
-		// broadcast avg length of doc
+		// broadcast average length of doc
 		Double avgDocLen = (double) (docLengthCount.value()/totalDocuments);
 		Broadcast<Double> avgDocumentLengthinCorpus = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(avgDocLen);
 
@@ -187,12 +179,11 @@ public class AssessedExercise {
 		KeyValueGroupedDataset<String, Tuple3<String,NewsArticle, Double>> grpDocs= matchedDocs.groupByKey(groupFunc,Encoders.STRING());
 
 		//reducer for sorting the above results
-		//Encoder<Tuple3<String, NewsArticle, Double>> grpSortEncoder = Encoders.tuple(Encoders.STRING(), Encoders.bean(NewsArticle.class), Encoders.DOUBLE());
 		Encoder<DocumentRanking> docRankEncoder = Encoders.bean(DocumentRanking.class);
 		SortByDphScore sortFunc = new SortByDphScore(allQueries);
 		Dataset<DocumentRanking> rankedDocumentResult = grpDocs.mapGroups(sortFunc, docRankEncoder);
-		System.out.println(avgDocLen);
 		docLengthCount.reset();
+
 		return rankedDocumentResult.collectAsList(); // replace this with the the list of DocumentRanking output by your topology
 	}
 
