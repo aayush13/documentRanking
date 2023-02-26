@@ -59,7 +59,7 @@ public class CalculateDPHScore implements FlatMapFunction<ProcessedNewsArticle, 
 			// create tuple3
 			Tuple3<String, NewsArticle, Double> temp = new Tuple3<String, NewsArticle, Double>( originalQ , value.getArticle(), avgScore);
 			// add it to a tuple3 list
-			if(!Double.isNaN(avgScore) || avgScore == 0.0 || temp._2().getTitle() != null) {
+			if(!Double.isNaN(avgScore) && avgScore > 0.0 && temp._2().getTitle() != null) {
 				result.add(temp);
 			}
 		}
