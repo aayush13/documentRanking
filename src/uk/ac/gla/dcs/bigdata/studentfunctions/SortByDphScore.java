@@ -16,7 +16,7 @@ import uk.ac.gla.dcs.bigdata.providedstructures.RankedResult;
 import uk.ac.gla.dcs.bigdata.providedutilities.TextDistanceCalculator;
 
 
-/// sorting the values and performing distance comparison and preparing final result
+// sorting the values and performing distance comparison and preparing final result
 public class SortByDphScore implements MapGroupsFunction<String, Tuple3<String, NewsArticle, Double>, DocumentRanking> {
 	/**
 	 *
