@@ -5,6 +5,8 @@ import org.apache.spark.api.java.function.MapFunction;
 import scala.Tuple3;
 import uk.ac.gla.dcs.bigdata.providedstructures.NewsArticle;
 
+
+//we will group the tuples based on the original query by returning the matchingTerm string of each tuple
 public class GroupDocsByQuery implements MapFunction<Tuple3<String,NewsArticle, Double>, String>{
 	/**
 	 *

@@ -6,6 +6,8 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 
 import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 
+
+// A map transformation that returns a list of terms (tokenized query) for every query.
 public class TermListMap implements FlatMapFunction<Query, String>{
 	/**
 	 *

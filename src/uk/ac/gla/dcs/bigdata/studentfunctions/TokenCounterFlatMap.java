@@ -12,6 +12,8 @@ import org.apache.spark.broadcast.Broadcast;
 
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
+
+// This flat map checks if any terms in the broadcasted list are present in the tokenised title or tokenised content of a document.
 public class TokenCounterFlatMap implements FlatMapFunction<ProcessedNewsArticle,ProcessedNewsArticle>{
 	/**
 	 *
