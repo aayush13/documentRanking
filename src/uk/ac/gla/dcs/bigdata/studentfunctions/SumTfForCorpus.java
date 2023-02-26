@@ -6,6 +6,9 @@ import org.apache.spark.api.java.function.ReduceFunction;
 
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
+
+
+// a reducer that helps to calculate the sum of term frequencies of all the terms across the corpus.
 public class SumTfForCorpus implements ReduceFunction<ProcessedNewsArticle>{
 
 	/**

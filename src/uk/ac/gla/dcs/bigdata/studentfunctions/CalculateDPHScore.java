@@ -14,6 +14,8 @@ import uk.ac.gla.dcs.bigdata.providedstructures.Query;
 import uk.ac.gla.dcs.bigdata.providedutilities.DPHScorer;
 import uk.ac.gla.dcs.bigdata.studentstructures.ProcessedNewsArticle;
 
+
+// calculate DPH score for documents with respect to queries.
 public class CalculateDPHScore implements FlatMapFunction<ProcessedNewsArticle, Tuple3<String,NewsArticle,Double>>{
 
 	/**
